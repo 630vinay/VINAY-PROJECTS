@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Translator</title>
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        body.dark {
+            background: linear-gradient(135deg, #050259 0%, #0495c1 50%,#02526b 100%);
+            color: #ecf0f1;
+        }
+
+        .mode {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .toggle {
+            cursor: pointer;
+        }
+
+        .toggle-track {
+            position: relative;
+            width: 80px;
+            height: 40px;
+            background: #ddd;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px;
+            transition: background 0.3s;
+        }
+
+        .toggle-checkbox {
+            display: none;
+        }
+
+        .toggle-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 36px;
+            height: 36px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .toggle-checkbox:checked + .toggle-thumb {
+            transform: translateX(40px);
+        }
+
+        .toggle-checkbox:checked ~ .toggle-track {
+            background: #4CAF50;
+        }
+
+        .toggle img {
+            width: 20px;
+            height: 20px;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: start;
+            margin-top: 80px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        body.dark .card {
+            background: rgba(18, 32, 163, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .from, .to {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .heading {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+            min-width: 50px;
+        }
+
+        body.dark .heading {
+            color: #ecf0f1;
+        }
+
+        .dropdown-container {
+            position: relative;
+            min-width: 200px;
+        }
+
+        .dropdown-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        body.dark .dropdown-toggle {
+            background: #34495e;
+            border-color: #555;
+            color: #ecf0f1;
+        }
+
+        .dropdown-toggle:hover {
+            background: #e9ecef;
+        }
+
+        body.dark .dropdown-toggle:hover {
+            background: #4a5f7a;
+        }
+
+        .dropdown-container.active .dropdown-toggle {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        body.dark .dropdown-menu {
+            background: #34495e;
+            border-color: #555;
+        }
+
+        .dropdown-container.active .dropdown-menu {
+            display: block;
+        }
+
+        .option {
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        body.dark .option {
+            border-bottom-color: #555;
+            color: #ecf0f1;
+        }
+
+        .option:hover, .option.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .text-area {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        body.dark textarea {
+            background: #2c3e50;
+            border-color: #555;
+            color: #ecf0f1;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .chars {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        body.dark .chars {
+            color: #bbb;
+        }
+
+        .card-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        body.dark .card-bottom {
+            border-top-color: #555;
+        }
+
+        .card-bottom p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        body.dark .card-bottom p {
+            color: #bbb;
+        }
+
+        .card-bottom label, .card-bottom button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .card-bottom label:hover, .card-bottom button:hover {
+            background: #0056b3;
+        }
+
+        .center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .swap-position {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        body.dark .swap-position {
+            background: #34495e;
+            color: #ecf0f1;
+        }
+
+        .swap-position:hover {
+            transform: rotate(180deg);
+            background: #007bff;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .from, .to {
+                flex-direction: column;
+                align-items: start;
+                gap: 10px;
+            }
+            
+            .dropdown-container {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mode">
+        <label class="toggle" for="dark-mode-btn">
+            <div class="toggle-track">
+                <input type="checkbox" class="toggle-checkbox" id="dark-mode-btn" />
+                <span class="toggle-thumb"></span>
+                <span style="font-size: 20px;">☀️</span>
+                <span style="font-size: 20px;">🌙</span>
+            </div>
+        </label>
+    </div>
+
+    <div class="container">
+        <div class="card input-wrapper">
+            <div class="from">
+                <span class="heading">From:</span>
+                <div class="dropdown-container" id="input-language">
+                    <div class="dropdown-toggle">
+                        <ion-icon name="globe-outline"></ion-icon>
+                        <span class="selected" data-value="auto">Auto Detect</span>
+                        <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
+                    <ul class="dropdown-menu"></ul>
+                </div>
+            </div>
+            <div class="text-area">
+                <textarea id="input-text" cols="30" rows="10" placeholder="Enter your text here"></textarea>
+                <div class="chars"><span id="input-chars">0</span> / 5000</div>
+            </div>
+            <div class="card-bottom">
+                <p>Or choose your document!</p>
+                <label for="upload-document">
+                    <span id="upload-title">Choose File</span>
+                    <ion-icon name="cloud-upload-outline"></ion-icon>
+                    <input type="file" id="upload-document" hidden />
+                </label>
+            </div>
+        </div>
+
+        <div class="center">
+            <div class="swap-position">
+                <ion-icon name="swap-horizontal-outline"></ion-icon>
+            </div>
+        </div>
+
+        <div class="card output-wrapper">
+            <div class="to">
+                <span class="heading">To:</span>
+                <div class="dropdown-container" id="output-language">
+                    <div class="dropdown-toggle">
+                        <ion-icon name="globe-outline"></ion-icon>
+                        <span class="selected" data-value="en">English</span>
+                        <ion-icon name="chevron-down-outline"></ion-icon>
+                    </div>
+                    <ul class="dropdown-menu"></ul>
+                </div>
+            </div>
+            <textarea id="output-text" cols="30" rows="10" placeholder="Translated text will appear here" readonly></textarea>
+            <div class="card-bottom">
+                <p>Download as a document!</p>
+                <button id="download-btn">
+                    <span>Download</span>
+                    <ion-icon name="cloud-download-outline"></ion-icon>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Languages data
+        const languages = [
+            { no: "0", name: "Auto", native: "Detect", code: "auto" },
+            { no: "1", name: "Afrikaans", native: "Afrikaans", code: "af" },
+            { no: "2", name: "Albanian", native: "Shqip", code: "sq" },
+            { no: "3", name: "Arabic", native: "عربي", code: "ar" },
+            { no: "4", name: "Armenian", native: "Հայերէն", code: "hy" },
+            { no: "5", name: "Azerbaijani", native: "آذربایجان دیلی", code: "az" },
+            { no: "6", name: "Basque", native: "Euskara", code: "eu" },
+            { no: "7", name: "Belarusian", native: "Беларуская", code: "be" },
+            { no: "8", name: "Bulgarian", native: "Български", code: "bg" },
+            { no: "9", name: "Catalan", native: "Català", code: "ca" },
+            { no: "10", name: "Chinese (Simplified)", native: "中文简体", code: "zh-CN" },
+            { no: "11", name: "Chinese (Traditional)", native: "中文繁體", code: "zh-TW" },
+            { no: "12", name: "Croatian", native: "Hrvatski", code: "hr" },
+            { no: "13", name: "Czech", native: "Čeština", code: "cs" },
+            { no: "14", name: "Danish", native: "Dansk", code: "da" },
+            { no: "15", name: "Dutch", native: "Nederlands", code: "nl" },
+            { no: "16", name: "English", native: "English", code: "en" },
+            { no: "17", name: "Estonian", native: "Eesti keel", code: "et" },
+            { no: "18", name: "Filipino", native: "Filipino", code: "tl" },
+            { no: "19", name: "Finnish", native: "Suomi", code: "fi" },
+            { no: "20", name: "French", native: "Français", code: "fr" },
+            { no: "21", name: "Galician", native: "Galego", code: "gl" },
+            { no: "22", name: "Georgian", native: "ქართული", code: "ka" },
+            { no: "23", name: "German", native: "Deutsch", code: "de" },
+            { no: "24", name: "Greek", native: "Ελληνικά", code: "el" },
+            { no: "25", name: "Haitian Creole", native: "Kreyòl ayisyen", code: "ht" },
+            { no: "26", name: "Hebrew", native: "עברית", code: "iw" },
+            { no: "27", name: "Hindi", native: "हिन्दी", code: "hi" },
+            { no: "28", name: "Hungarian", native: "Magyar", code: "hu" },
+            { no: "29", name: "Icelandic", native: "Íslenska", code: "is" },
+            { no: "30", name: "Indonesian", native: "Bahasa Indonesia", code: "id" },
+            { no: "31", name: "Irish", native: "Gaeilge", code: "ga" },
+            { no: "32", name: "Italian", native: "Italiano", code: "it" },
+            { no: "33", name: "Japanese", native: "日本語", code: "ja" },
+            { no: "34", name: "Korean", native: "한국어", code: "ko" },
+            { no: "35", name: "Latvian", native: "Latviešu", code: "lv" },
+            { no: "36", name: "Lithuanian", native: "Lietuvių kalba", code: "lt" },
+            { no: "37", name: "Macedonian", native: "Македонски", code: "mk" },
+            { no: "38", name: "Malay", native: "Malay", code: "ms" },
+            { no: "39", name: "Maltese", native: "Malti", code: "mt" },
+            { no: "40", name: "Norwegian", native: "Norsk", code: "no" },
+            { no: "41", name: "Persian", native: "فارسی", code: "fa" },
+            { no: "42", name: "Polish", native: "Polski", code: "pl" },
+            { no: "43", name: "Portuguese", native: "Português", code: "pt" },
+            { no: "44", name: "Romanian", native: "Română", code: "ro" },
+            { no: "45", name: "Russian", native: "Русский", code: "ru" },
+            { no: "46", name: "Serbian", native: "Српски", code: "sr" },
+            { no: "47", name: "Slovak", native: "Slovenčina", code: "sk" },
+            { no: "48", name: "Slovenian", native: "Slovensko", code: "sl" },
+            { no: "49", name: "Spanish", native: "Español", code: "es" },
+            { no: "50", name: "Swahili", native: "Kiswahili", code: "sw" },
+            { no: "51", name: "Swedish", native: "Svenska", code: "sv" },
+            { no: "52", name: "Thai", native: "ไทย", code: "th" },
+            { no: "53", name: "Turkish", native: "Türkçe", code: "tr" },
+            { no: "54", name: "Ukrainian", native: "Українська", code: "uk" },
+            { no: "55", name: "Urdu", native: "اردو", code: "ur" },
+            { no: "56", name: "Vietnamese", native: "Tiếng Việt", code: "vi" },
+            { no: "57", name: "Welsh", native: "Cymraeg", code: "cy" },
+            { no: "58", name: "Yiddish", native: "ייִדיש", code: "yi" }
+        ];
+
+        // DOM elements
+        const dropdowns = document.querySelectorAll(".dropdown-container");
+        const inputLanguageDropdown = document.querySelector("#input-language");
+        const outputLanguageDropdown = document.querySelector("#output-language");
+        const swapBtn = document.querySelector(".swap-position");
+        const inputLanguage = inputLanguageDropdown.querySelector(".selected");
+        const outputLanguage = outputLanguageDropdown.querySelector(".selected");
+        const inputTextElem = document.querySelector("#input-text");
+        const outputTextElem = document.querySelector("#output-text");
+        const uploadDocument = document.querySelector("#upload-document");
+        const uploadTitle = document.querySelector("#upload-title");
+        const downloadBtn = document.querySelector("#download-btn");
+        const darkModeCheckbox = document.getElementById("dark-mode-btn");
+        const inputChars = document.querySelector("#input-chars");
+
+        // Populate dropdowns
+        function populateDropdown(dropdown, options) {
+            dropdown.querySelector("ul").innerHTML = "";
+            options.forEach((option) => {
+                const li = document.createElement("li");
+                const title = option.name + " (" + option.native + ")";
+                li.innerHTML = title;
+                li.dataset.value = option.code;
+                li.classList.add("option");
+                dropdown.querySelector("ul").appendChild(li);
+            });
+        }
+
+        populateDropdown(inputLanguageDropdown, languages);
+        populateDropdown(outputLanguageDropdown, languages);
+
+        // Dropdown functionality
+        dropdowns.forEach((dropdown) => {
+            dropdown.addEventListener("click", (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle("active");
+            });
+
+            dropdown.querySelectorAll(".option").forEach((item) => {
+                item.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    dropdown.querySelectorAll(".option").forEach((item) => {
+                        item.classList.remove("active");
+                    });
+                    item.classList.add("active");
+                    const selected = dropdown.querySelector(".selected");
+                    selected.innerHTML = item.innerHTML;
+                    selected.dataset.value = item.dataset.value;
+                    dropdown.classList.remove("active");
+                    translate();
+                });
+            });
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener("click", (e) => {
+            dropdowns.forEach((dropdown) => {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove("active");
+                }
+            });
+        });
+
+        // Swap functionality
+        swapBtn.addEventListener("click", (e) => {
+            if (inputLanguage.dataset.value === "auto") {
+                alert("Cannot swap when input language is set to Auto Detect");
+                return;
+            }
+
+            const temp = inputLanguage.innerHTML;
+            inputLanguage.innerHTML = outputLanguage.innerHTML;
+            outputLanguage.innerHTML = temp;
+
+            const tempValue = inputLanguage.dataset.value;
+            inputLanguage.dataset.value = outputLanguage.dataset.value;
+            outputLanguage.dataset.value = tempValue;
+
+            const tempInputText = inputTextElem.value;
+            inputTextElem.value = outputTextElem.value;
+            outputTextElem.value = tempInputText;
+
+            translate();
+        });
+
+        // Translation function
+        function translate() {
+            const inputText = inputTextElem.value;
+            if (!inputText.trim()) {
+                outputTextElem.value = "";
+                return;
+            }
+
+            const inputLang = inputLanguageDropdown.querySelector(".selected").dataset.value;
+            const outputLang = outputLanguageDropdown.querySelector(".selected").dataset.value;
+            
+            if (inputLang === outputLang && inputLang !== "auto") {
+                outputTextElem.value = inputText;
+                return;
+            }
+
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${inputLang}&tl=${outputLang}&dt=t&q=${encodeURIComponent(inputText)}`;
+            
+            fetch(url)
+                .then((response) => response.json())
+                .then((json) => {
+                    if (json && json[0]) {
+                        outputTextElem.value = json[0].map((item) => item[0]).join("");
+                    }
+                })
+                .catch((error) => {
+                    console.error("Translation error:", error);
+                    outputTextElem.value = "Translation failed. Please try again.";
+                });
+        }
+
+        // Input text event listener
+        inputTextElem.addEventListener("input", (e) => {
+            if (inputTextElem.value.length > 5000) {
+                inputTextElem.value = inputTextElem.value.slice(0, 5000);
+            }
+            inputChars.innerHTML = inputTextElem.value.length;
+            translate();
+        });
+
+        // File upload functionality
+        uploadDocument.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const allowedTypes = [
+                "text/plain",
+                "application/pdf",
+                "application/msword",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ];
+
+            if (allowedTypes.includes(file.type)) {
+                uploadTitle.innerHTML = file.name;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    inputTextElem.value = e.target.result;
+                    inputChars.innerHTML = inputTextElem.value.length;
+                    translate();
+                };
+                reader.readAsText(file);
+            } else {
+                alert("Please upload a valid file (TXT, PDF, DOC, DOCX)");
+            }
+        });
+
+        // Download functionality
+        downloadBtn.addEventListener("click", (e) => {
+            const outputText = outputTextElem.value;
+            const outputLang = outputLanguageDropdown.querySelector(".selected").dataset.value;
+            
+            if (outputText.trim()) {
+                const blob = new Blob([outputText], { type: "text/plain;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.download = `translated-to-${outputLang}.txt`;
+                a.href = url;
+                a.click();
+                URL.revokeObjectURL(url);
+            } else {
+                alert("No translated text to download");
+            }
+        });
+
+        // Dark mode functionality
+        darkModeCheckbox.addEventListener("change", () => {
+            document.body.classList.toggle("dark");
+        });
+
+        // Initialize character count
+        inputChars.innerHTML = inputTextElem.value.length;
+    </script>
+</body>
+</html>
